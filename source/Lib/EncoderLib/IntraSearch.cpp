@@ -57,6 +57,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include "vvenc/vvencCfg.h"
 
+#include "CommonLib/ApproxHandler.h"
+
 //! \ingroup EncoderLib
 //! \{
 
@@ -109,6 +111,9 @@ void IntraSearch::init(const VVEncCfg &encCfg, TrQuant *pTrQuant, RdCost *pRdCos
     m_orgResiCb[i].create( chromaArea );
     m_orgResiCr[i].create( chromaArea );
   }
+#if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::addApproxIntraOrigSB();
+#endif
 }
 
 void IntraSearch::destroy()
@@ -135,6 +140,11 @@ void IntraSearch::destroy()
     m_pBestCS->destroy();
     delete m_pBestCS; m_pBestCS = nullptr;
   }
+
+#if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::removeApproxIntraOrigSB();
+#endif
+
 }
 
 IntraSearch::~IntraSearch()
@@ -211,6 +221,12 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
   {
     piOrg = cu.cs->getRspOrgBuf();
   }
+
+#if ENABLE_ORIG_SB_APPROX
+  piOrg.buf = ApproxHandler::initIntraOrigSB(piOrg, COMP_Y);
+  ApproxHandler::startGlobalLevel();
+#endif
+
   DistParam distParam    = m_pcRdCost->setDistParam( piOrg, piPred, sps.bitDepths[ CH_L ], DF_HAD_2SAD); // Use HAD (SATD) cost
 
   const int numHadCand = (testMip ? 2 : 1) * 3;
@@ -384,6 +400,11 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
     const double thresholdHadCost = 1.0 + 1.4 / sqrt((double)(cu.lwidth()*cu.lheight()));
     xReduceHadCandList(RdModeList, CandCostList, *m_SortedPelUnitBufs, numModesForFullRD, thresholdHadCost, mipHadCost, cu, fastMip);
   }
+
+#if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  piOrg.buf = ApproxHandler::restoreIntraOrigSB(COMP_Y);
+#endif
 
   if( m_pcEncCfg->m_bFastUDIUseMPMEnabled )
   {
@@ -799,6 +820,12 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
     CPelBuf orgCr  = cs.getOrgBuf (COMP_Cr);
     PelBuf predCr  = cs.getPredBuf(COMP_Cr);
 
+#if ENABLE_ORIG_SB_APPROX
+    orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
+    orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
+    ApproxHandler::startGlobalLevel();
+#endif
+
     DistParam distParamSadCb  = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_SAD);
     DistParam distParamSatdCb = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_HAD);
     DistParam distParamSadCr  = m_pcRdCost->setDistParam( orgCr, predCr, cu.cs->sps->bitDepths[ CH_C ], DF_SAD);
@@ -853,6 +880,12 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
       sad += std::min(sadCr, satdCr);
       satdSortedCost[idx] = sad;
     }
+
+#if ENABLE_ORIG_SB_APPROX
+    ApproxHandler::endGlobalLevel();
+    orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
+    orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
+#endif
 
     // sort the mode based on the cost from small to large.
     for (int i = uiMinMode; i <= uiMaxMode - 1; i++)
