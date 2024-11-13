@@ -225,6 +225,9 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
 #if ENABLE_ORIG_SB_APPROX
   piOrg.buf = ApproxHandler::initIntraOrigSB(piOrg, COMP_Y);
   ApproxHandler::startGlobalLevel();
+
+  //for debug
+  // std::cout << "OrigSB Start Level (Y)" << std::endl;
 #endif
 
   DistParam distParam    = m_pcRdCost->setDistParam( piOrg, piPred, sps.bitDepths[ CH_L ], DF_HAD_2SAD); // Use HAD (SATD) cost
@@ -404,6 +407,8 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
 #if ENABLE_ORIG_SB_APPROX
   ApproxHandler::endGlobalLevel();
   piOrg.buf = ApproxHandler::restoreIntraOrigSB(COMP_Y);
+  //for debug
+  // std::cout << "OrigSB End Level" << std::endl;
 #endif
 
   if( m_pcEncCfg->m_bFastUDIUseMPMEnabled )
@@ -824,6 +829,9 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
     orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
     orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
     ApproxHandler::startGlobalLevel();
+
+    //for debug
+    // std::cout << "OrigSB Start Level (Cb/Cr)" << std::endl;
 #endif
 
     DistParam distParamSadCb  = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_SAD);
@@ -885,6 +893,8 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
     ApproxHandler::endGlobalLevel();
     orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
     orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
+    //for debug
+  // std::cout << "OrigSB End Level" << std::endl;
 #endif
 
     // sort the mode based on the cost from small to large.

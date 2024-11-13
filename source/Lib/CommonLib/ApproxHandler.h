@@ -5,13 +5,18 @@
 
 namespace vvenc {
 
-#define ENABLE_ORIG_SB_APPROX 0
+#define ENABLE_ORIG_SB_APPROX 1
+#define ENABLE_NEIGH_SB_APPROX 1
 
 #define ORIG_SB_CONFIG 1
-
 #define ORIG_SB_BUFFER_Y 1
 #define ORIG_SB_BUFFER_CB 2
 #define ORIG_SB_BUFFER_CR 3
+
+#define NEIGH_SB_CONFIG 2
+#define NEIGH_SB_BUFFER_Y 4
+#define NEIGH_SB_BUFFER_CB 5
+#define NEIGH_SB_BUFFER_CR 6
 
 class ApproxHandler {
     public:
@@ -27,10 +32,12 @@ class ApproxHandler {
 
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
+
+        static void addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
+        static void removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
         
         static void startGlobalLevel();
         static void endGlobalLevel();
-
 
 };
 

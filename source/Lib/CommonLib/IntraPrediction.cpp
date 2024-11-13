@@ -52,6 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "InterpolationFilter.h"
 #include "dtrace_next.h"
 
+#include "ApproxHandler.h"
+
 #include <memory.h>
 
 //! \ingroup CommonLib
@@ -357,6 +359,14 @@ void IntraPrediction::predIntraAng( const ComponentID compId, PelBuf& piPred, co
   const CPelBuf& srcBuf = CPelBuf(getPredictorPtr(compID), srcStride, srcHStride);
   const ClpRng& clpRng(cu.cs->slice->clpRngs[compID]);
 
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  ApproxHandler::startGlobalLevel();
+
+  //for debug
+  // std::cout << "NeighSB Start Level (1)" << std::endl;
+#endif
+
   switch (uiDirMode)
   {
     case(PLANAR_IDX): xPredIntraPlanar(piPred, srcBuf); break;
@@ -372,6 +382,15 @@ void IntraPrediction::predIntraAng( const ComponentID compId, PelBuf& piPred, co
       IntraPredSampleFilter(piPred, srcBuf);
     }
   }
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  ApproxHandler::removeApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+
+  //for debug
+  // std::cout << "NeighSB End Level" << std::endl;
+#endif
+
 }
 
 void IntraPrediction::predIntraChromaLM(const ComponentID compID, PelBuf& piPred, const CodingUnit& cu, const CompArea& chromaArea, int intraDir)
@@ -729,6 +748,13 @@ void IntraPrediction::initIntraPatternChType(const CodingUnit &cu, const CompAre
 
   setReferenceArrayLengths(area);
 
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  ApproxHandler::startGlobalLevel();
+  //for debug
+  // std::cout << "NeighSB Start Level (2)" << std::endl;
+#endif
+
   // ----- Step 1: unfiltered reference samples -----
   xFillReferenceSamples( cs.picture->getRecoBuf( area ), refBufUnfiltered, area, cu );
   // ----- Step 2: filtered reference samples -----
@@ -736,6 +762,13 @@ void IntraPrediction::initIntraPatternChType(const CodingUnit &cu, const CompAre
   {
     xFilterReferenceSamples( refBufUnfiltered, refBufFiltered, area, *cs.sps, cu.multiRefIdx );
   }
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  ApproxHandler::removeApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  //for debug
+  // std::cout << "NeighSB End Level" << std::endl;
+#endif
 }
 
 void IntraPrediction::reset()
@@ -1508,6 +1541,14 @@ void IntraPrediction::xGetLMParameters(const CodingUnit& cu, const ComponentID c
   int cntT, cntL;
   cntT = cntL = 0;
   int cnt = 0;
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  ApproxHandler::startGlobalLevel();
+  //for debug
+  // std::cout << "NeighSB Start Level (3)" << std::endl;
+#endif
+
   if (aboveAvailable)
   {
     cntT = std::min(actualTopTemplateSampNum, (1 + aboveIs4) << 1);
@@ -1531,6 +1572,14 @@ void IntraPrediction::xGetLMParameters(const CodingUnit& cu, const ComponentID c
       selectChromaPix[cnt + cntT] = cur[pos];
     }
   }
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  ApproxHandler::removeApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  //for debug
+  // std::cout << "NeighSB End Level" << std::endl;
+#endif
+
   cnt = cntL + cntT;
 
   if (cnt == 2)
@@ -1606,7 +1655,21 @@ void IntraPrediction::initIntraMip( const CodingUnit& cu )
   const int srcStride  = m_refBufferStride[COMP_Y];
   const int srcHStride = 2;
 
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  ApproxHandler::startGlobalLevel();
+  //for debug
+  // std::cout << "NeighSB Start Level (4)" << std::endl;
+#endif
+
   m_matrixIntraPred.prepareInputForPred(CPelBuf(ptrSrc, srcStride, srcHStride), cu.Y(), cu.slice->sps->bitDepths[CH_L]);
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  ApproxHandler::removeApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  //for debug
+  // std::cout << "NeighSB End Level" << std::endl;
+#endif
 }
 
 void IntraPrediction::predIntraMip( PelBuf &piPred, const CodingUnit& cu )
@@ -1637,6 +1700,14 @@ void IntraPrediction::initIntraPatternChTypeISP(const CodingUnit& cu, const Comp
     (cs.getCURestricted(posLT.offset(-1, 0), cu, CH_L) != NULL);
   bool isAboveAvail =
     (cs.getCURestricted(posLT.offset(0, -1), cu, CH_L) != NULL);
+  
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  ApproxHandler::startGlobalLevel();
+  // for debug
+  // std::cout << "NeighSB Start Level (5)" << std::endl;
+#endif
+  
   // ----- Step 1: unfiltered reference samples -----
   if (cu.blocks[area.compID].x == area.x && cu.blocks[area.compID].y == area.y)
   {
@@ -1740,6 +1811,13 @@ void IntraPrediction::initIntraPatternChTypeISP(const CodingUnit& cu, const Comp
     Pel* refBufFiltered = m_refBuffer[area.compID][PRED_BUF_FILTERED];
     xFilterReferenceSamples(refBufUnfiltered, refBufFiltered, area, *cs.sps, cu.multiRefIdx);
   }
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::endGlobalLevel();
+  ApproxHandler::removeApproxIntraNeighSB(getPredictorPtr(COMP_Y), getPredictorPtr(COMP_Cb), getPredictorPtr(COMP_Cr));
+  //for debug
+  // std::cout << "NeighSB End Level" << std::endl;
+#endif
 }
 
 void IntraPrediction::setReferenceArrayLengths(const CompArea& area)
