@@ -83,48 +83,6 @@ const Pel* ApproxHandler::restoreIntraOrigSB(ComponentID comp) {
     }
 }
 
-/*
-void ApproxHandler::addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr) {
-    Pel *beginYNeighborBuffer, *endYNeighborBuffer;
-    Pel *beginCbNeighborBuffer, *endCbNeighborBuffer;
-    Pel *beginCrNeighborBuffer, *endCrNeighborBuffer;
-
-    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
-
-    beginYNeighborBuffer = neighY;
-    endYNeighborBuffer = beginYNeighborBuffer + bufferStride;
-    beginCbNeighborBuffer = neighCb;
-    endCbNeighborBuffer = beginCbNeighborBuffer + bufferStride;
-    beginCrNeighborBuffer = neighCr;
-    endCrNeighborBuffer = beginCrNeighborBuffer + bufferStride;
-
-    ApproxSS::add_approx((void *) beginYNeighborBuffer, (void *) endYNeighborBuffer, NEIGH_SB_BUFFER_Y, NEIGH_SB_CONFIG, sizeof(Pel));
-    ApproxSS::add_approx((void *) beginCbNeighborBuffer, (void *) endCbNeighborBuffer, NEIGH_SB_BUFFER_CB, NEIGH_SB_CONFIG, sizeof(Pel));
-    ApproxSS::add_approx((void *) beginCrNeighborBuffer, (void *) endCrNeighborBuffer, NEIGH_SB_BUFFER_CR, NEIGH_SB_CONFIG, sizeof(Pel));
-}
-*/
-
-/*
-void ApproxHandler::removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr) {
-    Pel *beginYNeighborBuffer, *endYNeighborBuffer;
-    Pel *beginCbNeighborBuffer, *endCbNeighborBuffer;
-    Pel *beginCrNeighborBuffer, *endCrNeighborBuffer;
-
-    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
-
-    beginYNeighborBuffer = neighY;
-    endYNeighborBuffer = beginYNeighborBuffer + bufferStride;
-    beginCbNeighborBuffer = neighCb;
-    endCbNeighborBuffer = beginCbNeighborBuffer + bufferStride;
-    beginCrNeighborBuffer = neighCr;
-    endCrNeighborBuffer = beginCrNeighborBuffer + bufferStride;
-
-    ApproxSS::remove_approx((void *) beginYNeighborBuffer,  (void *) endYNeighborBuffer);
-    ApproxSS::remove_approx((void *) beginCbNeighborBuffer, (void *) endCbNeighborBuffer);
-    ApproxSS::remove_approx((void *) beginCrNeighborBuffer, (void *) endCrNeighborBuffer);
-}
-*/
-
 void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp) {
     // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
 
@@ -151,7 +109,6 @@ void ApproxHandler::removeApproxIntraNeighSB(Pel* refBuffer) {
     Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
 
     ApproxSS::remove_approx((void *) beginNeighBuffer, (void *) endNeighBuffer);
-
 }
 
 void ApproxHandler::startGlobalLevel() {
