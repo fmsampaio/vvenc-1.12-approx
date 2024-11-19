@@ -33,8 +33,11 @@ class ApproxHandler {
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
 
-        static void addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
-        static void removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
+        // static void addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
+        // static void removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr);
+
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp);
+        static void removeApproxIntraNeighSB(Pel* refBuffer);
         
         static void startGlobalLevel();
         static void endGlobalLevel();

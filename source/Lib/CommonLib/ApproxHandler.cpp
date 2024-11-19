@@ -83,6 +83,7 @@ const Pel* ApproxHandler::restoreIntraOrigSB(ComponentID comp) {
     }
 }
 
+/*
 void ApproxHandler::addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr) {
     Pel *beginYNeighborBuffer, *endYNeighborBuffer;
     Pel *beginCbNeighborBuffer, *endCbNeighborBuffer;
@@ -101,7 +102,9 @@ void ApproxHandler::addApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighC
     ApproxSS::add_approx((void *) beginCbNeighborBuffer, (void *) endCbNeighborBuffer, NEIGH_SB_BUFFER_CB, NEIGH_SB_CONFIG, sizeof(Pel));
     ApproxSS::add_approx((void *) beginCrNeighborBuffer, (void *) endCrNeighborBuffer, NEIGH_SB_BUFFER_CR, NEIGH_SB_CONFIG, sizeof(Pel));
 }
+*/
 
+/*
 void ApproxHandler::removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* neighCr) {
     Pel *beginYNeighborBuffer, *endYNeighborBuffer;
     Pel *beginCbNeighborBuffer, *endCbNeighborBuffer;
@@ -120,7 +123,36 @@ void ApproxHandler::removeApproxIntraNeighSB(Pel* neighY, Pel* neighCb, Pel* nei
     ApproxSS::remove_approx((void *) beginCbNeighborBuffer, (void *) endCbNeighborBuffer);
     ApproxSS::remove_approx((void *) beginCrNeighborBuffer, (void *) endCrNeighborBuffer);
 }
+*/
 
+void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp) {
+    // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
+
+    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
+
+    Pel* beginNeighBuffer = refBuffer;
+    Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+
+    if(comp == COMP_Y) {
+        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_Y, NEIGH_SB_CONFIG, sizeof(Pel));
+    }
+    else if(comp == COMP_Cb) {
+        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CB, NEIGH_SB_CONFIG, sizeof(Pel));
+    }
+    else {
+        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CR, NEIGH_SB_CONFIG, sizeof(Pel));
+    }
+}
+
+void ApproxHandler::removeApproxIntraNeighSB(Pel* refBuffer) {
+    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
+
+    Pel* beginNeighBuffer = refBuffer;
+    Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+
+    ApproxSS::remove_approx((void *) beginNeighBuffer, (void *) endNeighBuffer);
+
+}
 
 void ApproxHandler::startGlobalLevel() {
     ApproxSS::start_level();

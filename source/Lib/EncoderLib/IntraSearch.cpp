@@ -114,6 +114,15 @@ void IntraSearch::init(const VVEncCfg &encCfg, TrQuant *pTrQuant, RdCost *pRdCos
 #if ENABLE_ORIG_SB_APPROX
   ApproxHandler::addApproxIntraOrigSB();
 #endif
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED), COMP_Y);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED), COMP_Y);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_FILTERED), COMP_Cb);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED), COMP_Cb);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED), COMP_Cr);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED), COMP_Cr);
+#endif
 }
 
 void IntraSearch::destroy()
@@ -143,6 +152,15 @@ void IntraSearch::destroy()
 
 #if ENABLE_ORIG_SB_APPROX
   ApproxHandler::removeApproxIntraOrigSB();
+#endif
+
+#if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED));
 #endif
 
 }
@@ -224,10 +242,10 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
 
 #if ENABLE_ORIG_SB_APPROX
   piOrg.buf = ApproxHandler::initIntraOrigSB(piOrg, COMP_Y);
-  ApproxHandler::startGlobalLevel();
+#endif
 
-  //for debug
-  // std::cout << "OrigSB Start Level (Y)" << std::endl;
+#if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::startGlobalLevel();
 #endif
 
   DistParam distParam    = m_pcRdCost->setDistParam( piOrg, piPred, sps.bitDepths[ CH_L ], DF_HAD_2SAD); // Use HAD (SATD) cost
@@ -404,11 +422,13 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
     xReduceHadCandList(RdModeList, CandCostList, *m_SortedPelUnitBufs, numModesForFullRD, thresholdHadCost, mipHadCost, cu, fastMip);
   }
 
-#if ENABLE_ORIG_SB_APPROX
+
+#if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
   ApproxHandler::endGlobalLevel();
+#endif
+
+#if ENABLE_ORIG_SB_APPROX
   piOrg.buf = ApproxHandler::restoreIntraOrigSB(COMP_Y);
-  //for debug
-  // std::cout << "OrigSB End Level" << std::endl;
 #endif
 
   if( m_pcEncCfg->m_bFastUDIUseMPMEnabled )
@@ -828,11 +848,12 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
 #if ENABLE_ORIG_SB_APPROX
     orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
     orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
-    ApproxHandler::startGlobalLevel();
-
-    //for debug
-    // std::cout << "OrigSB Start Level (Cb/Cr)" << std::endl;
 #endif
+
+#if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
+    ApproxHandler::startGlobalLevel();
+#endif
+
 
     DistParam distParamSadCb  = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_SAD);
     DistParam distParamSatdCb = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_HAD);
@@ -889,12 +910,13 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
       satdSortedCost[idx] = sad;
     }
 
-#if ENABLE_ORIG_SB_APPROX
+#if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
     ApproxHandler::endGlobalLevel();
+#endif
+
+#if ENABLE_ORIG_SB_APPROX
     orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
     orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
-    //for debug
-  // std::cout << "OrigSB End Level" << std::endl;
 #endif
 
     // sort the mode based on the cost from small to large.
