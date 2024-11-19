@@ -183,6 +183,8 @@ public:
     return numIntra;
   }
 
+  Pel* getRefBufferPtr( const ComponentID compId, PredBuf filtered ) { return m_refBuffer[compId][filtered ? PRED_BUF_FILTERED : PRED_BUF_UNFILTERED]; }
+
 };
 
 } // namespace vvenc
