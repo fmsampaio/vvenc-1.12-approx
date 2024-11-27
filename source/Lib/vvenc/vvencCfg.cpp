@@ -683,6 +683,8 @@ VVENC_DECL void vvenc_config_default(vvenc_config *c )
   memset( c->m_traceRule, '\0', sizeof(c->m_traceRule) );
   memset( c->m_traceFile, '\0', sizeof(c->m_traceFile) );
 
+  memset( c->m_traceFile, '\0', sizeof(c->dynApproxFileName) );
+
   c->m_numIntraModesFullRD                     = -1;
   c->m_reduceIntraChromaModesFullRD            = false;
 

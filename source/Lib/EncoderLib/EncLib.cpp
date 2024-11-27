@@ -58,6 +58,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "EncGOP.h"
 #include "CommonLib/x86/CommonDefX86.h"
 
+#include "CommonLib/ApproxHandler.h"
+
 //! \ingroup EncoderLib
 //! \{
 
@@ -111,6 +113,10 @@ void EncLib::initEncoderLib( const vvenc_config& encCfg )
 {
   // copy config parameter
   const_cast<VVEncCfg&>(m_encCfg) = encCfg;
+
+#if ENABLE_DYNAMIC_APPROX
+  ApproxHandler::initDynApprox(m_encCfg.dynApproxFileName);
+#endif
 
 #if defined( REAL_TARGET_X86 ) && defined( _MSC_VER ) && _MSC_VER >= 1938 && _MSC_VER < 1939
   if( read_x86_extension_flags() >= x86_simd::AVX2 )

@@ -9,6 +9,9 @@ const Pel* ApproxHandler::bkpIntraOrigBufferY;
 const Pel* ApproxHandler::bkpIntraOrigBufferCb;
 const Pel* ApproxHandler::bkpIntraOrigBufferCr;
 
+std::vector<int> ApproxHandler::dynApproxCfgs;
+FILE* ApproxHandler::dynApproxCfgFile;
+
 void ApproxHandler::addApproxIntraOrigSB() {
     approxIntraOrigBufferY = xMalloc(Pel, 128 * 128);
     approxIntraOrigBufferCb = xMalloc(Pel, 64 * 64);
@@ -118,5 +121,30 @@ void ApproxHandler::startGlobalLevel() {
 void ApproxHandler::endGlobalLevel() {
     ApproxSS::end_level();
 }
+
+void ApproxHandler::initDynApprox(const char fileName[]) {
+//void ApproxHandler::initDynApprox() {
+  for (int i = 0; i < NUM_RA_FRAME_LEVELS; i++) { 
+    dynApproxCfgs.push_back(SRAM_LOSSLESS);
+  }  
+
+  // dynApproxCfgFile = fopen(fileName.c_str(), "r");
+  dynApproxCfgFile = fopen(fileName, "r");
+
+  int frameLevel = -1;
+  int approxLevel = -1;
+
+  while(fscanf(dynApproxCfgFile, "%d;%d\n", &frameLevel, &approxLevel) != EOF) {
+    dynApproxCfgs[frameLevel] = approxLevel;
+  }
+
+  std::cout << "\n|nDYNAMIC APPROX LEVELS\n";
+  for (int i = 0; i < NUM_RA_FRAME_LEVELS; i++) { 
+    std::cout << i << " : " << dynApproxCfgs[i] << std::endl;
+  } 
+  
+}
+
+
 
 }

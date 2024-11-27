@@ -2,12 +2,16 @@
 #include "Unit.h"
 #include "approx.h"
 
+#include <vector>
 
 namespace vvenc {
 
+#define SRAM_LOSSLESS                           0
 #define SRAM_ECC_APPROX_LOW_CONFIG              1            // SRAM 0.7V  ECC
 #define SRAM_ECC_APPROX_MEDIUM_CONFIG           2            // SRAM 0.6V  ECC
 #define SRAM_ECC_APPROX_HIGH_CONFIG             3            // SRAM 0.55V ECC
+
+#define NUM_RA_FRAME_LEVELS                     6
 
 #define ENABLE_DYNAMIC_APPROX                   1            // 0 - Static; 1 - Dynamic
 
@@ -34,6 +38,9 @@ class ApproxHandler {
         static const Pel* bkpIntraOrigBufferCb;
         static const Pel* bkpIntraOrigBufferCr;
 
+        static std::vector<int> dynApproxCfgs;
+        static FILE* dynApproxCfgFile;        
+
         static void addApproxIntraOrigSB();
         static void removeApproxIntraOrigSB();
 
@@ -45,6 +52,8 @@ class ApproxHandler {
         
         static void startGlobalLevel();
         static void endGlobalLevel();
+
+        static void initDynApprox(const char fileName[]);
 
 };
 
