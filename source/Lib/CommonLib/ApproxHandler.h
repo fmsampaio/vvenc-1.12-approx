@@ -41,13 +41,16 @@ class ApproxHandler {
         static std::vector<int> dynApproxCfgs;
         static FILE* dynApproxCfgFile;        
 
+        static void allocIntraOrigSB();
         static void addApproxIntraOrigSB();
+        static void addApproxIntraOrigSB(int framePoc);
         static void removeApproxIntraOrigSB();
 
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
 
         static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc);
         static void removeApproxIntraNeighSB(Pel* refBuffer);
         
         static void startGlobalLevel();

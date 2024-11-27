@@ -111,6 +111,9 @@ void IntraSearch::init(const VVEncCfg &encCfg, TrQuant *pTrQuant, RdCost *pRdCos
     m_orgResiCb[i].create( chromaArea );
     m_orgResiCr[i].create( chromaArea );
   }
+
+#if !ENABLE_DYNAMIC_APPROX
+
 #if ENABLE_ORIG_SB_APPROX
   ApproxHandler::addApproxIntraOrigSB();
 #endif
@@ -122,6 +125,14 @@ void IntraSearch::init(const VVEncCfg &encCfg, TrQuant *pTrQuant, RdCost *pRdCos
   ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED), COMP_Cb);
   ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED), COMP_Cr);
   ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED), COMP_Cr);
+#endif
+
+#else
+
+#if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::allocIntraOrigSB();    
+#endif
+
 #endif
 }
 
@@ -150,17 +161,21 @@ void IntraSearch::destroy()
     delete m_pBestCS; m_pBestCS = nullptr;
   }
 
-#if ENABLE_ORIG_SB_APPROX
-  ApproxHandler::removeApproxIntraOrigSB();
-#endif
+#if !ENABLE_DYNAMIC_APPROX
 
-#if ENABLE_NEIGH_SB_APPROX
+  #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::removeApproxIntraOrigSB();
+  #endif
+
+  #if ENABLE_NEIGH_SB_APPROX
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED));
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED));
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_FILTERED));
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED));
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED));
   ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED));
+  #endif
+
 #endif
 
 }
@@ -240,8 +255,24 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
     piOrg = cu.cs->getRspOrgBuf();
   }
 
-#if ENABLE_ORIG_SB_APPROX
+#if ! ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
   piOrg.buf = ApproxHandler::initIntraOrigSB(piOrg, COMP_Y);
+  #endif
+
+#else // ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::addApproxIntraOrigSB(cu.slice->poc);
+  piOrg.buf = ApproxHandler::initIntraOrigSB(piOrg, COMP_Y);
+  #endif
+
+  #if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED), COMP_Y);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED), COMP_Y);
+  #endif
+
 #endif
 
 #if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
@@ -427,8 +458,24 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
   ApproxHandler::endGlobalLevel();
 #endif
 
-#if ENABLE_ORIG_SB_APPROX
+#if ! ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
   piOrg.buf = ApproxHandler::restoreIntraOrigSB(COMP_Y);
+  #endif
+
+  #else // ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::removeApproxIntraOrigSB();
+  piOrg.buf = ApproxHandler::restoreIntraOrigSB(COMP_Y);
+  #endif
+
+  #if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED));
+  #endif
+
 #endif
 
   if( m_pcEncCfg->m_bFastUDIUseMPMEnabled )
@@ -845,15 +892,30 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
     CPelBuf orgCr  = cs.getOrgBuf (COMP_Cr);
     PelBuf predCr  = cs.getPredBuf(COMP_Cr);
 
-#if ENABLE_ORIG_SB_APPROX
-    orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
-    orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
-#endif
+#if ! ENABLE_DYNAMIC_APPROX
 
-#if ENABLE_ORIG_SB_APPROX || ENABLE_NEIGH_SB_APPROX
-    ApproxHandler::startGlobalLevel();
-#endif
+  #if ENABLE_ORIG_SB_APPROX
+  orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
+  orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
+  #endif
 
+#else // ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::addApproxIntraOrigSB(cu.slice->poc);
+  orgCb.buf = ApproxHandler::initIntraOrigSB(orgCb, COMP_Cb);
+  orgCr.buf = ApproxHandler::initIntraOrigSB(orgCr, COMP_Cr);
+  #endif
+
+  #if ENABLE_NEIGH_SB_APPROX
+  
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_FILTERED), COMP_Cb);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED), COMP_Cb);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED), COMP_Cr);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED), COMP_Cr);
+  #endif
+
+#endif
 
     DistParam distParamSadCb  = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_SAD);
     DistParam distParamSatdCb = m_pcRdCost->setDistParam( orgCb, predCb, cu.cs->sps->bitDepths[ CH_C ], DF_HAD);
@@ -914,10 +976,30 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
     ApproxHandler::endGlobalLevel();
 #endif
 
-#if ENABLE_ORIG_SB_APPROX
-    orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
-    orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
+#if ! ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
+  orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
+  orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
+  #endif
+
+  #else // ENABLE_DYNAMIC_APPROX
+
+  #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::removeApproxIntraOrigSB();
+  orgCb.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cb);
+  orgCr.buf = ApproxHandler::restoreIntraOrigSB(COMP_Cr);
+  #endif
+
+  #if ENABLE_NEIGH_SB_APPROX
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_FILTERED));
+  ApproxHandler::removeApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED));
+  #endif
+
 #endif
+
 
     // sort the mode based on the cost from small to large.
     for (int i = uiMinMode; i <= uiMaxMode - 1; i++)
