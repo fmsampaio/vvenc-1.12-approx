@@ -115,6 +115,7 @@ void IntraSearch::init(const VVEncCfg &encCfg, TrQuant *pTrQuant, RdCost *pRdCos
 #if !ENABLE_DYNAMIC_APPROX
 
 #if ENABLE_ORIG_SB_APPROX
+  ApproxHandler::allocIntraOrigSB();
   ApproxHandler::addApproxIntraOrigSB();
 #endif
 

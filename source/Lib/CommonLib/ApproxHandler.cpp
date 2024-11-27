@@ -12,6 +12,8 @@ const Pel* ApproxHandler::bkpIntraOrigBufferCr;
 std::vector<int> ApproxHandler::dynApproxCfgs;
 FILE* ApproxHandler::dynApproxCfgFile;
 
+bool ApproxHandler::isOrigApproxAdded, ApproxHandler::isNeighApproxAdded;
+
 int FRAME_LEVEL_RA_GOP32[33] = {0, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 1, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 0};
 int FRAME_LEVEL_RA_GOP16[17] = {0, 4, 3, 4, 2, 4, 3, 4, 1, 4, 3, 4, 2, 4, 3, 4, 0};
 
@@ -26,6 +28,9 @@ void ApproxHandler::allocIntraOrigSB() {
   * STATIC APPROXIMATION
   *********************************************/
 void ApproxHandler::addApproxIntraOrigSB() {
+
+    isOrigApproxAdded = true;
+
     Pel* beginBufferY = approxIntraOrigBufferY;
     Pel* endBufferY = beginBufferY + (128 * 128);
 
@@ -44,6 +49,15 @@ void ApproxHandler::addApproxIntraOrigSB() {
   * DYNAMIC APPROXIMATION
   *********************************************/
 void ApproxHandler::addApproxIntraOrigSB(int framePoc) {
+  int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
+  std::cout << "ORIG APPROX: Frame " << framePoc << " " << approxLevel << "\n";
+  isOrigApproxAdded = false;
+
+  if(approxLevel == 0) 
+    return;
+  
+  isOrigApproxAdded = true;
+
   Pel* beginBufferY = approxIntraOrigBufferY;
   Pel* endBufferY = beginBufferY + (128 * 128);
 
@@ -53,14 +67,18 @@ void ApproxHandler::addApproxIntraOrigSB(int framePoc) {
   Pel* beginBufferCr = approxIntraOrigBufferCr;
   Pel* endBufferCr = beginBufferCr + (64 * 64);
 
-  int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
-
   ApproxSS::add_approx((void *) beginBufferY, (void *) endBufferY, ORIG_SB_BUFFER_Y, approxLevel, sizeof(const Pel)); //Luma (1); Cb (2); Cr (3)
   ApproxSS::add_approx((void *) beginBufferCb, (void *) endBufferCb, ORIG_SB_BUFFER_CB, approxLevel, sizeof(const Pel)); //Luma (1); Cb (2); Cr (3)
   ApproxSS::add_approx((void *) beginBufferCr, (void *) endBufferCr, ORIG_SB_BUFFER_CR, approxLevel, sizeof(const Pel)); //Luma (1); Cb (2); Cr (3)
+
 }
 
 void ApproxHandler::removeApproxIntraOrigSB() {
+  if(! isOrigApproxAdded)
+    return;
+
+  isOrigApproxAdded = false;
+
   Pel*    beginBufferY = approxIntraOrigBufferY;
   Pel* endBufferY = beginBufferY + (128 * 128);
 
@@ -75,7 +93,7 @@ void ApproxHandler::removeApproxIntraOrigSB() {
   ApproxSS::remove_approx((void *) beginBufferCr, (void *) endBufferCr);
 }
 
-Pel* ApproxHandler::initIntraOrigSB(CPelBuf origBuffer, ComponentID comp) {
+Pel* ApproxHandler::initIntraOrigSB(CPelBuf origBuffer, ComponentID comp) {  
   int bufferStride = origBuffer.stride * origBuffer.height;
 
   if(comp == COMP_Y) {
@@ -117,6 +135,8 @@ const Pel* ApproxHandler::restoreIntraOrigSB(ComponentID comp) {
 
 void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp) {
     // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
+    
+    isOrigApproxAdded = true;
 
     int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
 
@@ -135,33 +155,46 @@ void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp) {
 }
 
 void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc) {
-    // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
+  int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
+  std::cout << "NEIGH APPROX: Frame " << framePoc << " " << approxLevel << "\n";
 
-    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
+  isNeighApproxAdded = false;
 
-    Pel* beginNeighBuffer = refBuffer;
-    Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+  if(approxLevel == 0)
+    return;
+  
+  isNeighApproxAdded = true;
 
-    int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
+  // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
 
-    if(comp == COMP_Y) {
-        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_Y, approxLevel, sizeof(Pel));
-    }
-    else if(comp == COMP_Cb) {
-        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CB, approxLevel, sizeof(Pel));
-    }
-    else {
-        ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CR, approxLevel, sizeof(Pel));
-    }
+  int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
+
+  Pel* beginNeighBuffer = refBuffer;
+  Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+
+  if(comp == COMP_Y) {
+      ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_Y, approxLevel, sizeof(Pel));
+  }
+  else if(comp == COMP_Cb) {
+      ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CB, approxLevel, sizeof(Pel));
+  }
+  else {
+      ApproxSS::add_approx((void *) beginNeighBuffer, (void *) endNeighBuffer, NEIGH_SB_BUFFER_CR, approxLevel, sizeof(Pel));
+  }
 }
 
 void ApproxHandler::removeApproxIntraNeighSB(Pel* refBuffer) {
-    int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
+  if(! isNeighApproxAdded)
+    return;
+  
+  isNeighApproxAdded = false;
 
-    Pel* beginNeighBuffer = refBuffer;
-    Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+  int bufferStride = (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2 - 1;
 
-    ApproxSS::remove_approx((void *) beginNeighBuffer, (void *) endNeighBuffer);
+  Pel* beginNeighBuffer = refBuffer;
+  Pel* endNeighBuffer = beginNeighBuffer + bufferStride;
+
+  ApproxSS::remove_approx((void *) beginNeighBuffer, (void *) endNeighBuffer);
 }
 
 void ApproxHandler::startGlobalLevel() {

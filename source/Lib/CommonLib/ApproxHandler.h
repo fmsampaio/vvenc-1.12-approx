@@ -13,7 +13,7 @@ namespace vvenc {
 
 #define NUM_RA_FRAME_LEVELS                     6
 
-#define ENABLE_DYNAMIC_APPROX                   1            // 0 - Static; 1 - Dynamic
+#define ENABLE_DYNAMIC_APPROX                   0            // 0 - Static; 1 - Dynamic
 
 #define ENABLE_ORIG_SB_APPROX                   1         
 #define ENABLE_NEIGH_SB_APPROX                  1
@@ -40,6 +40,8 @@ class ApproxHandler {
 
         static std::vector<int> dynApproxCfgs;
         static FILE* dynApproxCfgFile;        
+
+        static bool isOrigApproxAdded, isNeighApproxAdded;
 
         static void allocIntraOrigSB();
         static void addApproxIntraOrigSB();
