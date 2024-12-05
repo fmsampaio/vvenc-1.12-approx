@@ -12,8 +12,8 @@ const Pel* ApproxHandler::bkpIntraOrigBufferCr;
 std::vector<int> ApproxHandler::dynApproxCfgs;
 FILE* ApproxHandler::dynApproxCfgFile;
 
-int FRAME_LEVEL_RA_GOP32[33] = {0, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 1, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 0};
-int FRAME_LEVEL_RA_GOP16[17] = {0, 4, 3, 4, 2, 4, 3, 4, 1, 4, 3, 4, 2, 4, 3, 4, 0};
+// int FRAME_LEVEL_RA_GOP32[33] = {0, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 1, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 0};
+// int FRAME_LEVEL_RA_GOP16[17] = {0, 4, 3, 4, 2, 4, 3, 4, 1, 4, 3, 4, 2, 4, 3, 4, 0};
 
 
 void ApproxHandler::allocIntraOrigSB() {
@@ -47,8 +47,8 @@ void ApproxHandler::addApproxIntraOrigSB(ComponentID comp) {
 /*********************************************
   * DYNAMIC APPROXIMATION
   *********************************************/
-void ApproxHandler::addApproxIntraOrigSB(ComponentID comp, int framePoc) {
-  int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
+void ApproxHandler::addApproxIntraOrigSB(ComponentID comp, int frameLevel) {
+  int approxLevel = dynApproxCfgs[frameLevel];
   // std::cout << "ORIG APPROX: Frame " << framePoc << " " << approxLevel << "\n";
  
   if(approxLevel == 0) 
@@ -153,8 +153,8 @@ void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int 
     }
 }
 
-void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc, int filt) {
-  int approxLevel = dynApproxCfgs[FRAME_LEVEL_RA_GOP32[framePoc]];
+void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int frameLevel, int filt) {
+  int approxLevel = dynApproxCfgs[frameLevel];
   // std::cout << "NEIGH APPROX: Frame " << framePoc << " " << approxLevel << "\n";
 
   // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2

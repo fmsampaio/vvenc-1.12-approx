@@ -223,12 +223,12 @@ void IntraSearch::xEstimateLumaRdModeList(int& numModesForFullRD,
 #if ENABLE_DYNAMIC_APPROX
 
   #if ENABLE_ORIG_SB_APPROX
-  ApproxHandler::addApproxIntraOrigSB(COMP_Y, cu.slice->poc);
+  ApproxHandler::addApproxIntraOrigSB(COMP_Y, cu.slice->TLayer);
   #endif
 
   #if ENABLE_NEIGH_SB_APPROX
-  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED), COMP_Y, cu.slice->poc, 1);
-  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED), COMP_Y, cu.slice->poc, 0);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_FILTERED), COMP_Y, cu.slice->TLayer, 1);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Y, PRED_BUF_UNFILTERED), COMP_Y, cu.slice->TLayer, 0);
   #endif
 
 #else // not ENABLE_DYNAMIC_APPROX ==> STATIC
@@ -858,13 +858,13 @@ void IntraSearch::estIntraPredChromaQT( CodingUnit& cu, Partitioner& partitioner
 #if ENABLE_DYNAMIC_APPROX
   
   #if ENABLE_ORIG_SB_APPROX
-  ApproxHandler::addApproxIntraOrigSB(COMP_Cb, cu.slice->poc);
-  ApproxHandler::addApproxIntraOrigSB(COMP_Cr, cu.slice->poc);
+  ApproxHandler::addApproxIntraOrigSB(COMP_Cb, cu.slice->TLayer);
+  ApproxHandler::addApproxIntraOrigSB(COMP_Cr, cu.slice->TLayer);
   #endif
 
   #if ENABLE_NEIGH_SB_APPROX
-  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED), COMP_Cb, cu.slice->poc, 0);
-  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED), COMP_Cr, cu.slice->poc, 0);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cb, PRED_BUF_UNFILTERED), COMP_Cb, cu.slice->TLayer, 0);
+  ApproxHandler::addApproxIntraNeighSB(getRefBufferPtr(COMP_Cr, PRED_BUF_UNFILTERED), COMP_Cr, cu.slice->TLayer, 0);
   #endif
 
 #else // not ENABLE_DYNAMIC_APPROX ==> STATIC

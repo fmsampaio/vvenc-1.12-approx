@@ -16,7 +16,7 @@ namespace vvenc {
 #define ENABLE_DYNAMIC_APPROX                   0            // 0 - Static; 1 - Dynamic
 
 #define ENABLE_ORIG_SB_APPROX                   1         
-#define ENABLE_NEIGH_SB_APPROX                  0
+#define ENABLE_NEIGH_SB_APPROX                  1
 
 #define ORIG_SB_CONFIG                          1            // Static Approximation
 #define ORIG_SB_BUFFER_Y                        1
@@ -44,14 +44,14 @@ class ApproxHandler {
 
         static void allocIntraOrigSB();
         static void addApproxIntraOrigSB(ComponentID comp);
-        static void addApproxIntraOrigSB(ComponentID comp, int framePoc);
+        static void addApproxIntraOrigSB(ComponentID comp, int frameLevel);
         static void removeApproxIntraOrigSB(ComponentID comp);
 
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
 
         static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt);
-        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc, int filt);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int frameLevel, int filt);
         static void removeApproxIntraNeighSB(Pel* refBuffer);
         
         static void startGlobalLevel();
