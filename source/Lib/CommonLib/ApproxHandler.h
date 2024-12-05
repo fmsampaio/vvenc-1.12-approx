@@ -16,7 +16,7 @@ namespace vvenc {
 #define ENABLE_DYNAMIC_APPROX                   0            // 0 - Static; 1 - Dynamic
 
 #define ENABLE_ORIG_SB_APPROX                   1         
-#define ENABLE_NEIGH_SB_APPROX                  1
+#define ENABLE_NEIGH_SB_APPROX                  0
 
 #define ORIG_SB_CONFIG                          1            // Static Approximation
 #define ORIG_SB_BUFFER_Y                        1
@@ -25,8 +25,9 @@ namespace vvenc {
 
 #define NEIGH_SB_CONFIG                         2            // Static Approximation
 #define NEIGH_SB_BUFFER_Y                       4
-#define NEIGH_SB_BUFFER_CB                      5
-#define NEIGH_SB_BUFFER_CR                      6
+#define NEIGH_SB_BUFFER_Y_FILT                  5
+#define NEIGH_SB_BUFFER_CB                      6
+#define NEIGH_SB_BUFFER_CR                      7
 
 
 class ApproxHandler {
@@ -41,18 +42,16 @@ class ApproxHandler {
         static std::vector<int> dynApproxCfgs;
         static FILE* dynApproxCfgFile;        
 
-        static bool isOrigApproxAdded, isNeighApproxAdded;
-
         static void allocIntraOrigSB();
-        static void addApproxIntraOrigSB();
-        static void addApproxIntraOrigSB(int framePoc);
-        static void removeApproxIntraOrigSB();
+        static void addApproxIntraOrigSB(ComponentID comp);
+        static void addApproxIntraOrigSB(ComponentID comp, int framePoc);
+        static void removeApproxIntraOrigSB(ComponentID comp);
 
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
 
-        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp);
-        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int framePoc, int filt);
         static void removeApproxIntraNeighSB(Pel* refBuffer);
         
         static void startGlobalLevel();
