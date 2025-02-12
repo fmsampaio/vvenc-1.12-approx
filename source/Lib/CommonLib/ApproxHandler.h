@@ -39,7 +39,7 @@ class ApproxHandler {
         static const Pel* bkpIntraOrigBufferCb;
         static const Pel* bkpIntraOrigBufferCr;
 
-        static std::vector<int> dynApproxCfgs;
+        static std::vector<int> dynApproxCfgsOrig, dynApproxCfgsNeigh;
         static FILE* dynApproxCfgFile;        
 
         static void allocIntraOrigSB();

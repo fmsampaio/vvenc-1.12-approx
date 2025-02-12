@@ -9,7 +9,8 @@ const Pel* ApproxHandler::bkpIntraOrigBufferY;
 const Pel* ApproxHandler::bkpIntraOrigBufferCb;
 const Pel* ApproxHandler::bkpIntraOrigBufferCr;
 
-std::vector<int> ApproxHandler::dynApproxCfgs;
+std::vector<int> ApproxHandler::dynApproxCfgsOrig;
+std::vector<int> ApproxHandler::dynApproxCfgsNeigh;
 FILE* ApproxHandler::dynApproxCfgFile;
 
 // int FRAME_LEVEL_RA_GOP32[33] = {0, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 1, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 0};
@@ -48,7 +49,7 @@ void ApproxHandler::addApproxIntraOrigSB(ComponentID comp) {
   * DYNAMIC APPROXIMATION
   *********************************************/
 void ApproxHandler::addApproxIntraOrigSB(ComponentID comp, int frameLevel) {
-  int approxLevel = dynApproxCfgs[frameLevel];
+  int approxLevel = dynApproxCfgsOrig[frameLevel];
   // std::cout << "ORIG APPROX: Frame " << framePoc << " " << approxLevel << "\n";
  
   if(approxLevel == 0) 
@@ -154,7 +155,7 @@ void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int 
 }
 
 void ApproxHandler::addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int frameLevel, int filt) {
-  int approxLevel = dynApproxCfgs[frameLevel];
+  int approxLevel = dynApproxCfgsNeigh[frameLevel];
   // std::cout << "NEIGH APPROX: Frame " << framePoc << " " << approxLevel << "\n";
 
   // size: (MAX_CU_SIZE * 2 + 1 + MAX_REF_LINE_IDX) * 2
@@ -200,22 +201,25 @@ void ApproxHandler::endGlobalLevel() {
 void ApproxHandler::initDynApprox(const char fileName[]) {
 //void ApproxHandler::initDynApprox() {
   for (int i = 0; i < NUM_RA_FRAME_LEVELS; i++) { 
-    dynApproxCfgs.push_back(SRAM_LOSSLESS);
+    dynApproxCfgsOrig.push_back(SRAM_LOSSLESS);
+    dynApproxCfgsNeigh.push_back(SRAM_LOSSLESS);
   }  
 
   // dynApproxCfgFile = fopen(fileName.c_str(), "r");
   dynApproxCfgFile = fopen(fileName, "r");
 
   int frameLevel = -1;
-  int approxLevel = -1;
+  int approxLevelOrig = -1;
+  int approxLevelNeigh = -1;
 
-  while(fscanf(dynApproxCfgFile, "%d;%d\n", &frameLevel, &approxLevel) != EOF) {
-    dynApproxCfgs[frameLevel] = approxLevel;
+  while(fscanf(dynApproxCfgFile, "%d;%d;%d\n", &frameLevel, &approxLevelOrig, &approxLevelNeigh) != EOF) {
+    dynApproxCfgsOrig[frameLevel] = approxLevelOrig;
+    dynApproxCfgsNeigh[frameLevel] = approxLevelNeigh;
   }
 
   std::cout << "\n\nDYNAMIC APPROX LEVELS\n";
   for (int i = 0; i < NUM_RA_FRAME_LEVELS; i++) { 
-    std::cout << i << " : " << dynApproxCfgs[i] << std::endl;
+    std::cout << i << " : (OrigSB) " << dynApproxCfgsOrig[i] << " (NeighSB) " << dynApproxCfgsNeigh[i] << std::endl;
   } 
 
   fclose(dynApproxCfgFile);
