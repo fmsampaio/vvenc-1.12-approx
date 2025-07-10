@@ -14,7 +14,7 @@ namespace vvenc {
 
 #define NUM_RA_FRAME_LEVELS                     6
 
-#define ENABLE_DYNAMIC_APPROX                   1            // 0 - Static; 1 - Dynamic
+#define APPROX_STRATEGY                         2            // 0 - Static; 1 - Dynamic; 2 - Dynamic (CU Level)
 
 #define ENABLE_ORIG_SB_APPROX                   1         
 #define ENABLE_NEIGH_SB_APPROX                  1
@@ -47,32 +47,40 @@ class ApproxHandler {
         static const Pel* bkpIntraOrigBufferCr;
 
         static std::vector<int> dynApproxCfgs;
+        static int cuLevelApproxLevel;
         static FILE* dynApproxCfgFile;      
 
         static int frameWidth, frameHeight, numOfFrames;
         static std::map<int, int*> intraMaps;  
 
+        // BASELINE APPROXIMATION FUNCTIONS
         static void allocIntraOrigSB();
-        static void addApproxIntraOrigSB(ComponentID comp);
-        static void addApproxIntraOrigSB(ComponentID comp, int frameLevel);
+        static void addBaselineApproxIntraOrigSB(ComponentID comp, int approxLevel);
+        static void addBaselineApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt, int approxLevel);
         static void removeApproxIntraOrigSB(ComponentID comp);
-
         static Pel* initIntraOrigSB(CPelBuf origBuffer, ComponentID comp);
         static const Pel* restoreIntraOrigSB(ComponentID comp);
-
-        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt);
-        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int frameLevel, int filt);
         static void removeApproxIntraNeighSB(Pel* refBuffer);
-        
         static void startGlobalLevel();
         static void endGlobalLevel();
+        
+        // STATIC APPROXIMATION FUNCTIONS
+        static void addApproxIntraOrigSB(ComponentID comp);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt);
 
+        // FRAME-LEVEL DYNAMIC APPROXIMATION FUNCTIONS
         static void initDynApprox(const char fileName[]);
-
+        static void addApproxIntraOrigSB(ComponentID comp, int frameLevel);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt, int frameLevel);
+        
+        // CU-LEVEL DYNAMIC APPROXIMATION FUNCTIONS
         static void initCuLevelApprox(int width, int height, int nf);
         static void updateIntraMap(int framePoc, int xCU, int yCU, int wCU, int hCU);
         static void applyExpandFactor(int *xCU, int *yCU, int *wCU, int *hCU);
         static void reportIntraMap(int framePoc);
+        static bool checkReferenceIsIntra(int framePoc, int xCU, int yCU, int wCU, int hCU);
+        static void addApproxIntraNeighSB(Pel* refBuffer, ComponentID comp, int filt, int frameLevel, int framePoc, int xCU, int yCU, int wCU, int hCU);
+        static void addApproxIntraOrigSB(ComponentID comp, int frameLevel, int framePoc, int xCU, int yCU, int wCU, int hCU);
 
 };
 
