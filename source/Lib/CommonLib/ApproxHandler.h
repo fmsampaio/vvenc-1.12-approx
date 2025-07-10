@@ -3,6 +3,7 @@
 #include "approx.h"
 
 #include <vector>
+#include <map>
 
 namespace vvenc {
 
@@ -18,6 +19,7 @@ namespace vvenc {
 #define ENABLE_ORIG_SB_APPROX                   1         
 #define ENABLE_NEIGH_SB_APPROX                  1
 
+
 #define ORIG_SB_CONFIG                          1            // Static Approximation
 #define ORIG_SB_BUFFER_Y                        1
 #define ORIG_SB_BUFFER_CB                       2
@@ -28,6 +30,11 @@ namespace vvenc {
 #define NEIGH_SB_BUFFER_Y_FILT                  5
 #define NEIGH_SB_BUFFER_CB                      6
 #define NEIGH_SB_BUFFER_CR                      7
+
+#define ENABLE_INTRA_MAPS_REPORT                0
+
+#define INTRA_MAP_RESOLUTION                    4
+#define INTRA_MAP_EXPAND_FACTOR                 0
 
 
 class ApproxHandler {
@@ -40,7 +47,10 @@ class ApproxHandler {
         static const Pel* bkpIntraOrigBufferCr;
 
         static std::vector<int> dynApproxCfgs;
-        static FILE* dynApproxCfgFile;        
+        static FILE* dynApproxCfgFile;      
+
+        static int frameWidth, frameHeight, numOfFrames;
+        static std::map<int, int*> intraMaps;  
 
         static void allocIntraOrigSB();
         static void addApproxIntraOrigSB(ComponentID comp);
@@ -58,6 +68,11 @@ class ApproxHandler {
         static void endGlobalLevel();
 
         static void initDynApprox(const char fileName[]);
+
+        static void initCuLevelApprox(int width, int height, int nf);
+        static void updateIntraMap(int framePoc, int xCU, int yCU, int wCU, int hCU);
+        static void applyExpandFactor(int *xCU, int *yCU, int *wCU, int *hCU);
+        static void reportIntraMap(int framePoc);
 
 };
 

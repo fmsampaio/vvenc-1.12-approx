@@ -64,6 +64,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <algorithm>
 
+#include "CommonLib/ApproxHandler.h"
+
 //! \ingroup EncoderLib
 //! \{
 
@@ -451,9 +453,24 @@ void EncCu::xCompressCtu( CodingStructure& cs, const UnitArea& area, const unsig
   // reset context states and uninit context pointer
   m_CABACEstimator->getCtx() = m_CurrCtx->start;
   m_CurrCtx                  = 0;
+
+  //Felipe: fill intra map
+  const ChannelType chType = ChannelType(vvenc::ChannelType::CH_L);
+  const TreeType treeType = TreeType(vvenc::TreeType::TREE_D);
+  for(const CodingUnit &cu : cs.traverseCUs(CS::getArea(cs, area, chType, treeType), chType)) {
+    int framePoc = cu.slice->poc;
+    int xCU = cu.lx();
+    int yCU = cu.ly();
+    int wCU = cu.lwidth();
+    int hCU = cu.lheight();
+    bool isIntra = cu.predMode == 1;
+
+    if(isIntra) {
+      // std::cout << "[DBG] Updating intra map... Frame (" << framePoc << ") CU (" << xCU << "," << yCU << ")\n";
+      ApproxHandler::updateIntraMap(framePoc, xCU, yCU, wCU, hCU);
+    }
+  }
 }
-
-
 
 bool EncCu::xCheckBestMode( CodingStructure *&tempCS, CodingStructure *&bestCS, Partitioner &partitioner, const EncTestMode& encTestMode, const bool useEDO )
 {

@@ -59,6 +59,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include "vvenc/vvencCfg.h"
 
+#include "CommonLib/ApproxHandler.h"
+
 //! \ingroup EncoderLib
 //! \{
 
@@ -576,6 +578,11 @@ void EncSlice::compressSlice( Picture* pic )
   }
 
   xProcessCtus( pic, startCtuTsAddr, boundingCtuTsAddr );
+
+#if ENABLE_INTRA_MAPS_REPORT
+  ApproxHandler::reportIntraMap(slice->poc);
+#endif
+
 }
 
 void setJointCbCrModes( CodingStructure& cs, const Position topLeftLuma, const Size sizeLuma )

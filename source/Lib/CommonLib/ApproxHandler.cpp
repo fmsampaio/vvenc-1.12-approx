@@ -12,6 +12,9 @@ const Pel* ApproxHandler::bkpIntraOrigBufferCr;
 std::vector<int> ApproxHandler::dynApproxCfgs;
 FILE* ApproxHandler::dynApproxCfgFile;
 
+std::map<int, int*> ApproxHandler::intraMaps;
+int ApproxHandler::frameWidth, ApproxHandler::frameHeight, ApproxHandler::numOfFrames;
+
 // int FRAME_LEVEL_RA_GOP32[33] = {0, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 1, 5, 4, 5, 3, 5, 4, 5, 2, 5, 4, 5, 3, 5, 4, 5, 0};
 // int FRAME_LEVEL_RA_GOP16[17] = {0, 4, 3, 4, 2, 4, 3, 4, 1, 4, 3, 4, 2, 4, 3, 4, 0};
 
@@ -190,11 +193,11 @@ void ApproxHandler::removeApproxIntraNeighSB(Pel* refBuffer) {
 }
 
 void ApproxHandler::startGlobalLevel() {
-    ApproxSS::start_level();
+  ApproxSS::start_level();
 }
 
 void ApproxHandler::endGlobalLevel() {
-    ApproxSS::end_level();
+  ApproxSS::end_level();
 }
 
 void ApproxHandler::initDynApprox(const char fileName[]) {
@@ -220,6 +223,78 @@ void ApproxHandler::initDynApprox(const char fileName[]) {
 
   fclose(dynApproxCfgFile);
   
+}
+
+/*********************************************
+  * DYNAMIC CU-LEVEL APPROXIMATION
+  *********************************************/
+
+void ApproxHandler::initCuLevelApprox(int width, int height, int nf) {
+  frameWidth = width;
+  frameHeight = height;
+  numOfFrames = nf;
+
+  for (int f = 0; f < numOfFrames; f++)
+  {
+    intraMaps[f] = NULL;
+  }
+}
+
+void ApproxHandler::updateIntraMap(int framePoc, int xCU, int yCU, int wCU, int hCU) {  
+  int intraMapAllocSize = (frameWidth / INTRA_MAP_RESOLUTION) * (frameHeight / INTRA_MAP_RESOLUTION);
+
+  int xBegin = xCU / INTRA_MAP_RESOLUTION;
+  int yBegin = yCU / INTRA_MAP_RESOLUTION;
+  int xEnd = (xCU + wCU) / INTRA_MAP_RESOLUTION;
+  int yEnd = (yCU + hCU) / INTRA_MAP_RESOLUTION;
+
+  // std::cout << "[DBG] Before expanding: " << xBegin << " " << xEnd << " " << yBegin << " " << yEnd << std::endl;
+
+  applyExpandFactor(&xBegin, &yBegin, &xEnd, &yEnd);
+  
+  // std::cout << "[DBG] After expanding: " << xBegin << " " << xEnd << " " << yBegin << " " << yEnd << std::endl;
+
+  if(intraMaps[framePoc] == NULL) {
+    // std::cout << "[DBG] Allocing intra map for frame " << framePoc << std::endl;
+    intraMaps[framePoc] = (int*) malloc(intraMapAllocSize * sizeof(int));
+    std::fill(intraMaps[framePoc], intraMaps[framePoc] + intraMapAllocSize, 0);
+  }
+
+  for(int x = xBegin; x < xEnd; x++) {
+    for(int y = yBegin; y < yEnd; y++) {
+      int pos = x + (y * (frameWidth / INTRA_MAP_RESOLUTION));
+      intraMaps[framePoc][pos] = 1;
+    }
+  }
+}
+
+void ApproxHandler::reportIntraMap(int framePoc) {
+  if(intraMaps[framePoc] == NULL) {
+      std::cout << "No intra map. Skipping...\n";
+      return;
+  }
+  std::cout << "[DBG] INTRA MAP REPORT\n";
+  std::cout << "Frame " << framePoc << std::endl;
+  for (int y = 0; y < (frameHeight / INTRA_MAP_RESOLUTION); y++) {
+      for (int x = 0; x < (frameWidth / INTRA_MAP_RESOLUTION); x++) {
+          int pos = x + (y * (frameWidth / INTRA_MAP_RESOLUTION));
+          std::cout << intraMaps[framePoc][pos] << " ";
+      }
+      std::cout << std::endl;
+  }  
+}
+
+void ApproxHandler::applyExpandFactor(int *xBegin, int *yBegin, int *xEnd, int *yEnd) {
+  if(INTRA_MAP_EXPAND_FACTOR > 0) {
+    int mapWidth = frameWidth / INTRA_MAP_RESOLUTION;
+    int mapHeight = frameHeight / INTRA_MAP_RESOLUTION;
+
+    *xBegin = (*xBegin) - INTRA_MAP_EXPAND_FACTOR < 0 ? 0 : (*xBegin) - INTRA_MAP_EXPAND_FACTOR;
+    *yBegin = (*yBegin) - INTRA_MAP_EXPAND_FACTOR < 0 ? 0 : (*yBegin) - INTRA_MAP_EXPAND_FACTOR;
+
+    *xEnd = (*xEnd) + INTRA_MAP_EXPAND_FACTOR >= mapWidth ? mapWidth - 1 : (*xEnd) + INTRA_MAP_EXPAND_FACTOR;
+    *yEnd = (*yEnd) + INTRA_MAP_EXPAND_FACTOR >= mapHeight ? mapHeight - 1 : (*yEnd) + INTRA_MAP_EXPAND_FACTOR;
+  }
 }
 
 }
